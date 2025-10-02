@@ -8,5 +8,5 @@
 多数のブログ記事に関して処理と再保存を行いますから、不適当な操作で記事データに影響する
 場合があり得ます。 使用上のリスクを理解して、処理結果は自己責任の上でご利用ください。
 
-「Every Page Worker 💢💢 ALT」の使用方法に関する記事
+「Every Page Worker 💢💢 ALT」の使用方法に関する記事<br>
 https://ameblo.jp/personwritep/entry-12935672810.html
