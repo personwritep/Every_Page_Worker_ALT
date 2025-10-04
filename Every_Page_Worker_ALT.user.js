@@ -163,17 +163,19 @@ window.addEventListener('load', function(){ // 親ウインドウで働くメイ
 
             function start_stop(n){
                 if(drive_mode=='s'){ // 最初の起動直後
-                    let conf_str='　　 🔴　このページ以降の記事に連続した処理を実行します'+
-                        '\n\n　　　　  停止ボタンのクリックで処理停止/処理再開ができます';
-                    let ok=confirm(conf_str);
-                    if(ok){
+                    if(n==0){
+                        let conf_str='　　 🔴　このページ以降の記事に連続した処理を実行します'+
+                            '\n\n　　　　  停止ボタンのクリックで処理停止/処理再開ができます';
+                        let ok=confirm(conf_str);
+                        if(ok){
+                            drive_mode='c'; // ページ内の連続処理
+                            button1.setAttribute('value', '　処理を一旦停止　　❚❚');
+                            next(0); }}
+                    else{
+                        alert('　🔴🔴　処理を開始する記事を左クリックしてください');
                         drive_mode='c'; // ページ内の連続処理
                         button1.setAttribute('value', '　処理を一旦停止　　❚❚');
-                        if(n==0){
-                            next(0); }
-                        else{
-                            alert('　処理を開始する記事を左クリックしてください');
-                            clicked_item(); }}}
+                        clicked_item(); }}
 
                 else if(drive_mode=='c'){ // 連続動作状態の場合
                     drive_mode='p'; // クリックされたら「p」停止モード
