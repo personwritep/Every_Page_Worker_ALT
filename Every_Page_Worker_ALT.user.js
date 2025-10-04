@@ -388,7 +388,7 @@ window.addEventListener('load', function(){ // 親ウインドウで働くメイ
             link_target[k]='/ucs/entry/srventryupdateinput.do?id='+ entry_id[k].value;
 
             if(drive_mode=='c'){
-                let win_option='top=20, left=40, width=800, height=300';
+                let win_option='top=60, left=0, width=800, height=300';
                 new_win[k]=window.open(link_target[k], k, win_option);
 
                 list_bar[k].style.boxShadow='inset 0 0 0 2px #03a9f4'; // リスト欄に青枠表示
@@ -416,7 +416,7 @@ window.addEventListener('load', function(){ // 親ウインドウで働くメイ
                                             if(all_img.length==0){ // 編集非対応 🟥🟧🟥
                                                 send_result(0); // 処理結果をデータ保存
                                                 reject(); }
-                                            else{ // リンクカードのALT書換えと他の画像のALTのチェック🟥🟧🟥
+                                            else{ // リンクカードのALT書換え＋画像のALTのチェック🟥🟧🟥
                                                 let check=0;
                                                 for(let k=0; k<all_img.length; k++){
                                                     if(all_img[k].classList.contains('ogpCard_image')){
@@ -614,4 +614,3 @@ window.addEventListener('load', function(){ // 親ウインドウで働くメイ
             window.close();
         }}
 });
-
