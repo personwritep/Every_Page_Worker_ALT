@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name        Every Page Worker 💢💢 ALT
 // @namespace        http://tampermonkey.net/
-// @version        5.2
+// @version        5.4
 // @description        「記事の編集・削除」でブログ全記事を開いて更新を実行
 // @author        Ameba Blog User
 // @match        https://blog.ameba.jp/ucs/entry/srventrylist*
@@ -19,7 +19,22 @@ window.addEventListener('DOMContentLoaded', function(){ // CSSデザインを適
     let body_id=document.body.getAttribute('id');
     if(body_id=='entryListEdit'){ //「記事の編集・削除」の画面にのみCSS適用
 
-        let style=
+        let box=
+            '<div id="div_out">'+
+            '<input id="list_snap" type="button" value="処理を再開　▶">'+
+            'Card：<button id="card_thum" type="button" ></button>'+
+            '<span id="snap_result">記録件数：</span>'+
+            '<div id="div_in">'+
+            '<span">Check🔵：</span>'+
+            '<input id="num" type="number" min="0" max="1">'+
+            '<input id="editor_open" type="button" value="編集">'+
+            '</div>'+
+            '<input id="reset" type="button" value="初期化">'+
+            '<input id="export" type="button" value="Export">'+
+            '<input id="import" type="button" value="Import">'+
+            '<input id="import_in" type="file">'+
+            '<button id="epwa_help">？</button>'+
+            '</div>'+
             '<style>'+
             '#globalHeader, #ucsHeader, #ucsMainLeft h1, .l-ucs-sidemenu-area, .selection-bar { '+
             'display: none !important; } '+
@@ -36,32 +51,51 @@ window.addEventListener('DOMContentLoaded', function(){ // CSSデザインを適
             '.pagingArea a { border: 1px solid #888; } '+
             '.pagingArea .active{ border: 2px solid #0066cc; } '+
             '.pagingArea a, .pagingArea .active, .pagingArea .disabled { font-size: 14px; line-height: 23px; } '+
-            '#sorting { margin: 36px 0 4px; padding: 2px 0; height: 78px; background: #ddedf3; } '+
+            '#sorting { margin: 36px 0 4px; padding: 2px 0; height: 41px; position: relative; '+
+            'background: #c0dbed !important; } '+
             '#sorting select, #sorting ul { display: none; } '+
 
             '#entryList .status-text { right: 374px !important; } '+
             '#entryList .entry-info .date { right: 260px !important; } '+
             '#entryList .actions { width: 240px; } '+
 
-            '#div0 { color: #333; font-size: 14px; margin: 0 -10px 0 15px; } '+
-            '#div1 { color: #000; font-size: 14px; margin: 1px 15px; background: #c0dbed; } '+
-            '#list_snap { padding: 2px 0 0; margin: 7px 20px 7px 0; width: 180px; } '+
-            '#reset { padding: 2px 0 0; margin-right: 20px; width: 60px; } '+
-            '#export { padding: 2px 0 0; margin: 7px 10px 7px 0; width: 100px; } '+
-            '.snap_result { display: inline-block; margin: 6px 4px 4px 12px; } '+
-            '.num { padding: 2px 2px 0 6px; width: 40px; } '+
-            '.editor_open { padding: 2px 0 0; margin: 0 20px 0 4px; width: 50px; } '+
+            '#div_out { font: 14px Meiryo; color: #000; ; margin: 0 -10px 0 15px; } '+
+            '#list_snap { padding: 2px 0 0; margin: 7px 30px 7px 0; width: 140px; } '+
+            '#card_thum { font: 14px Meiryo; height: 26.5px; width: 44px; padding: 2px 0 0; '+
+            'border: 1px solid #777; border-radius: 2px; background: #fff; '+
+            'position: absolute; top: 9px; left: 230px; } '+
+            '#snap_result { display: inline-block; margin: 0 0 0 65px; } '+
+            '#div_in { color: #000; font-size: 14px; position: absolute; top: 9px; left: 400px; } '+
+            '#num { padding: 2px 2px 0 6px; width: 40px; } '+
+            '#editor_open { padding: 2px 0 0; margin: 0 0 0 4px; width: 50px; } '+
+            '#reset { padding: 2px 0 0; width: 60px; position: absolute; top: 9px; right: 210px; } '+
+            '#export { padding: 2px 0 0; width: 66px; position: absolute; top: 9px; right: 120px; } '+
+            '#import { padding: 2px 0 0; width: 68px; position: absolute; top: 9px; right: 40px; } '+
+            '#import_in { display: none; } '+
+
+            '#epwa_help { font: bold 19px/20px Meiryo; text-indent: -5px; height: 22px; '+
+            'width: 22px; border: 1px solid #666; border-radius: 40px; background: #ffffff50; '+
+            'position: absolute; top: 13px; right: 8px; cursor: pointer; } '+
+
             'input { font-family: meiryo; font-size: 14px; } '+
-            '.ch1, .ch2 { font: 15px/27px Meiryo; color: #0277bd; opacity: 0; }'+
-            '.ch1 { margin-left: 8px; } '+
-            '.ch2 { margin-left: 2px; } '+
+            '.ch1 { font: 15px/27px Meiryo; color: #0277bd; opacity: 0; margin-left: 8px; } '+
             '</style>';
 
-        document.head.insertAdjacentHTML('beforeend', style);
+        let sorting=document.querySelector('#sorting');
+        if(sorting){
+            if(!sorting.querySelector('#div_out')){
+                sorting.insertAdjacentHTML('beforeend', box); }}
+
+        let help_sw=document.querySelector('#epwa_help');
+        if(help_sw){
+            help_sw.onclick=(e)=>{
+                e.preventDefault();
+                let help_url="https://ameblo.jp/personwritep/entry-12935672810.html";
+                window.open(help_url, '_blank', 'noopener=yes,noreferrer=yes'); }}
 
         let actions=document.querySelectorAll('#entryList .actions');
         for(let k=0; k<actions.length; k++){
-            let iAH='<span class="ch1">❶</span><span class="ch2">❷</span>';
+            let iAH='<span class="ch1">🔵</span>';
             actions[k].insertAdjacentHTML('beforeend', iAH); }
 
     }})
@@ -73,11 +107,11 @@ window.addEventListener('load', function(){ // 親ウインドウで働くメイ
     if(body_id=='entryListEdit'){ // 親ウインドウの条件
 
         let drive_mode; // ページ更新時の動作モード
+        let card_img; // リンクカードのサムネイル仕様
         let blogDB={}; //「対象記事のID/チェックフラグ または内容」の記録配列
 
         let entry_id_DB; // ID検索用の配列
-        let pub_1; // flag 1 が記録された記事総数
-        let pub_2; // flag 2 が記録された記事総数
+        let pub; // flag 1 が記録された記事総数
 
         let entry_id;
         let entry_target;
@@ -90,34 +124,28 @@ window.addEventListener('load', function(){ // 親ウインドウで働くメイ
         let editor_iframe;
         let iframe_doc;
 
-        let ua=0;
-        let agent=window.navigator.userAgent.toLowerCase();
-        if(agent.indexOf('firefox') > -1){ ua=1; } // Firefoxの場合のフラグ
 
-
-        let read_json=localStorage.getItem('EPW_DB_back'); // ローカルストレージ 保存名
+        let read_json=localStorage.getItem('EPWA_DB_back'); // ローカルストレージ 保存名
         blogDB=JSON.parse(read_json);
         if(blogDB==null){
-            blogDB=[['epw00000000', 's', 0]]; }
+            blogDB=[['epwa0000000', 's', 0]]; }
         drive_mode=blogDB[0][1]; // 起動時に動作フラグを取得
-        blogDB[0][1]='s'; // リロード時等のためにリセット
+        card_img=blogDB[0][2]; // 起動時にカードサムネイル仕様を取得
+        blogDB[0][1]='s'; // リロード時のためにリセット
         let write_json=JSON.stringify(blogDB);
-        localStorage.setItem('EPW_DB_back', write_json); // ローカルストレージ 保存
+        localStorage.setItem('EPWA_DB_back', write_json); // ローカルストレージ 保存
 
         reg_set();
 
         function reg_set(){
             let k;
             entry_id_DB=[]; // リセット
-            pub_1=0;
-            pub_2=0;
+            pub=0;
 
             for(k=0; k<blogDB.length; k++){
                 entry_id_DB[k]=blogDB[k][0]; // ID検索用の配列を作成
-                if(blogDB[k][1]=='1'){
-                    pub_1 +=1; } // flag 1 が記録された記事総数（検索1）
-                if(blogDB[k][2]=='1'){
-                    pub_2 +=1; }}} // flag 2 が記録された記事総数（検索2）
+                if(blogDB[k][1]==1){
+                    pub +=1; }}} // flag 1 が記録された記事総数（検索1）
 
 
         entry_id=document.querySelectorAll('input[name="entry_id"]');
@@ -130,33 +158,22 @@ window.addEventListener('load', function(){ // 親ウインドウで働くメイ
         hit_display();
 
         function control_pannel(dm){
-            let sty;
-            let insert_div0;
-            insert_div0=document.createElement('div');
-            insert_div0.setAttribute('id', 'div0');
-            let box=document.querySelector('#sorting');
-            box.appendChild(insert_div0);
+            let button1=document.querySelector('#list_snap');
 
-            let insert_div1;
-            insert_div1=document.createElement('div');
-            insert_div1.setAttribute('id', 'div1');
-            box.appendChild(insert_div1);
-
-            let button1=document.createElement('input');
-            button1.setAttribute('id', 'list_snap');
-            button1.setAttribute('type', 'submit');
-            insert_div0.appendChild(button1);
             if(dm=='s'){
-                button1.setAttribute('value', '全記事へ処理を開始　▶'); }
+                button1.value='処理を開始　▶'; }
             else if(dm=='c'){
-                button1.setAttribute('value', '　処理を一旦停止　　❚❚'); }
+                button1.value='一旦停止　　❚❚'; }
             else if(dm=='e'){
-                button1.setAttribute('value', '処理が全て終了しました'); }
+                button1.value='処理が全て終了'; }
+
 
             button1.addEventListener('click', function(e){
                 e.preventDefault();
                 if(e.ctrlKey){
                     start_stop(1); } // ページの途中から連続処理スタート
+                else if(e.shiftKey){
+                    start_stop(2); } // ページの途中の1記事のみ処理
                 else{
                     start_stop(0); }}, false);
 
@@ -164,26 +181,30 @@ window.addEventListener('load', function(){ // 親ウインドウで働くメイ
             function start_stop(n){
                 if(drive_mode=='s'){ // 最初の起動直後
                     if(n==0){
-                        let conf_str='　　 🔴　このページ以降の記事に連続した処理を実行します'+
-                            '\n\n　　　　  停止ボタンのクリックで処理停止/処理再開ができます';
+                        let conf_str='　 🔴　このページの先頭から連続した処理を開始します'+
+                            '\n\n　　　  停止ボタンのクリックで処理停止/処理再開ができます\n';
                         let ok=confirm(conf_str);
                         if(ok){
                             drive_mode='c'; // ページ内の連続処理
-                            button1.setAttribute('value', '　処理を一旦停止　　❚❚');
+                            button1.value='一旦停止　　❚❚';
                             next(0); }}
-                    else{
-                        alert('　🔴🔴　処理を開始する記事を左クリックしてください');
+                    else if(n==1){
+                        alert('　🔴　左クリックした記事から連続した処理を開始します');
                         drive_mode='c'; // ページ内の連続処理
-                        button1.setAttribute('value', '　処理を一旦停止　　❚❚');
+                        button1.value='一旦停止　　❚❚';
+                        clicked_item(); }
+                    else if(n==2){
+                        drive_mode='m'; // ページ内の単一処理
+                        button1.value='❚❚❚❚ 単一処理 ❚❚❚❚';
                         clicked_item(); }}
 
                 else if(drive_mode=='c'){ // 連続動作状態の場合
                     drive_mode='p'; // クリックされたら「p」停止モード
-                    button1.setAttribute('value', '　処理を再開する　　▶'); }
+                    button1.value='処理を再開　　▶'; }
 
                 else if(drive_mode=='p'){ // 動作停止状態の場合
                     drive_mode='c'; // クリックされたら連続動作を再開
-                    button1.setAttribute('value', '　処理を一旦停止　　❚❚');
+                    button1.value='一旦停止　　❚❚';
                     open_win(next_target); }
 
                 function clicked_item(){
@@ -197,55 +218,123 @@ window.addEventListener('load', function(){ // 親ウインドウで働くメイ
 
 
             if(dm=='c'){ // ページを開いた時に「c」は連続動作
-                setTimeout(next(0), 200); } // 「c」連続動作はぺージ遷移時 0.2sec で自動実行 ⭕
-            else if(dm=='e'){ // 「e」は終了
+                setTimeout(next(0), 200); } //「c」連続動作はぺージ遷移時 0.2sec で自動実行 ⭕
+            else if(dm=='e'){ //「e」は終了
                 button1.style.pointerEvents='none'; }
 
+            card_img_set();
+            snap_disp();
+            pub_edit();
+            reset_data();
+            backup();
 
-            let button2=document.createElement('input');
-            button2.setAttribute('id', 'reset');
-            button2.setAttribute('type', 'submit');
-            button2.setAttribute('value', '初期化');
-            insert_div0.appendChild(button2);
+        } // control_pannel()
 
+
+
+        function card_img_set(){
+            let card_thum=document.querySelector('#card_thum');
+            if(card_img==0){
+                card_thum.textContent='🔗';
+                card_thum.style.background='#fff'; }
+            else{
+                card_thum.textContent='Text';
+                card_thum.style.background='#00f1f1'; }
+
+            card_thum.onclick=()=>{
+                if(card_img==0){
+                    card_img=1;
+                    card_thum.textContent='Text';
+                    card_thum.style.background='#00f1f1';
+                    blogDB[0][2]=1; }
+                else{
+                    card_img=0;
+                    card_thum.textContent='🔗';
+                    card_thum.style.background='#fff';
+                    blogDB[0][2]=0; }
+
+                let write_json=JSON.stringify(blogDB);
+                localStorage.setItem('EPWA_DB_back', write_json); } // ローカルストレージ 保存
+
+        } // card_img_set()
+
+
+
+        function snap_disp(){
+            reg_set();
+            let snap_r=document.querySelector('#snap_result');
+            snap_r.textContent='記録件数：' + (blogDB.length -1);
+            let button6=document.querySelector('#num');
+            button6.value=pub;
+            button6.max=pub; }
+
+
+
+        function pub_edit(){
+            let button6=document.querySelector('#num');
+            let button7=document.querySelector('#editor_open');
+            button7.onclick=function(e){
+                e.preventDefault();
+                let k;
+                let pub_DB=[]; // pub の entry_id の配列
+                if(pub>0){
+                    for(k=0; k<blogDB.length; k++){
+                        if(blogDB[k][1]==1){
+                            pub_DB.push(blogDB[k][0]); }}
+
+                    if(button6.value>0){
+                        let open_id=pub_DB[button6.value -1];
+                        let pass=
+                            'https://blog.ameba.jp/ucs/entry/srventryupdateinput.do?id='+ open_id;
+                        let win_option='top=20, left=40, width=1020, height=900';
+                        window.open(pass, button6.value, win_option); }}}
+
+        } // pub_edit()
+
+
+
+        function reset_data(){
+            let button2=document.querySelector('#reset');
             button2.onclick=function(e){
                 e.preventDefault();
-                blogDB=[['epw00000000', 's', 0]];
-                let write_json=JSON.stringify(blogDB);
-                localStorage.setItem('EPW_DB_back', write_json); // ローカルストレージ保存
-                snap_disp();
-                hit_display_clear();
-                document.querySelector('#reset').value='〔　〕'; }
+                let conf_str=
+                    '　 🔴　これまでの処理で保存された記事のデータを全て削除します\n'+
+                    '　　　  データを削除して良い場合は「OK」を押します\n'+
+                    '　  ▶　「キャンセル」してファイル保存をすると、後でデータを戻せます\n';
+                let ok=confirm(conf_str);
+                if(ok){
+                    blogDB=[['epwa0000000', 's', 0]];
+                    let write_json=JSON.stringify(blogDB);
+                    localStorage.setItem('EPWA_DB_back', write_json); // ローカルストレージ保存
+                    snap_disp();
+                    hit_display_clear();
+                    document.querySelector('#reset').value='〔　〕'; }}
 
-            let button3=document.createElement('input');
-            button3.setAttribute('id', 'export');
-            button3.setAttribute('type', 'submit');
-            button3.setAttribute('value', 'ファイル保存');
-            insert_div0.appendChild(button3);
+        } // reset_data()
 
+
+
+        function backup(){
+            let button3=document.querySelector('#export');
             button3.onclick=function(e){
                 e.preventDefault();
                 let write_json=JSON.stringify(blogDB);
                 let blob=new Blob([write_json], {type: 'application/json'});
                 let a_elem=document.createElement('a');
                 a_elem.href=URL.createObjectURL(blob);
-                a_elem.download='EPW.json'; // 保存ファイル名
-                if(ua==1){
-                    a_elem.target='_blank';
-                    document.body.appendChild(a_elem); }
+                a_elem.download='EPWA.json'; // 保存ファイル名
                 a_elem.click();
-                if(ua==1){
-                    document.body.removeChild(a_elem); }
                 URL.revokeObjectURL(a_elem.href); }
 
-            let button4=document.createElement('input');
-            button4.setAttribute('type', 'file');
-            button4.setAttribute('style', 'vertical-align: 1px; width: 390px');
-            insert_div0.appendChild(button4);
 
-            button4.addEventListener("change", function(){
-                if(!(button4.value)) return; // ファイルが選択されない場合
-                let file_list=button4.files;
+            let button2=document.querySelector('#reset');
+            let button4=document.querySelector('#import');
+            let button5=document.querySelector('#import_in');
+            button4.onclick=()=>{ button5.click(); }
+
+            button5.addEventListener("change", function(){
+                if(!(button5.value)) return; // ファイルが選択されない場合
+                let file_list=button5.files;
                 if(!file_list) return; // ファイルリストが選択されない場合
                 let file=file_list[0];
                 if(!file) return; // ファイルが無い場合
@@ -253,125 +342,44 @@ window.addEventListener('load', function(){ // 親ウインドウで働くメイ
                 let file_reader=new FileReader();
                 file_reader.readAsText(file);
                 file_reader.onload=function(){
-                    if(file_reader.result.slice(0, 15)=='[["epw00000000"'){ // EPW.jsonの確認
+                    if(file_reader.result.slice(0, 15)=='[["epwa0000000"'){ // EPWA.jsonの確認
                         let data_in=JSON.parse(file_reader.result);
                         blogDB=data_in; // 読込み上書き処理
                         let write_json=JSON.stringify(blogDB);
-                        localStorage.setItem('EPW_DB_back', write_json); // ローカルストレージ 保存
-                        button2.setAttribute('value', '初期化'); // 初期化後なら読み込んだ事を示す
-                        snap_disp(); }
+                        localStorage.setItem('EPWA_DB_back', write_json); // ローカルストレージ 保存
+                        button2.value='初期化'; // 初期化後なら読み込んだ事を示す
+                        snap_disp();
+                        hit_display(); }
                     else{
-                        alert("   ⛔ 不適合なファイルです  EPW.json ファイルを選択してください");}};});
+                        alert("　⛔ 不適合なファイルです  EPWA.json ファイルを選択してください");}};
 
-            let span5=document.createElement('span');
-            span5.setAttribute('id', 'snap_result1');
-            span5.setAttribute('class', 'snap_result');
-            insert_div1.appendChild(span5);
+                setTimeout(()=>{
+                    this.value=null; // 同ファイルの再読込みを可能にする
+                }, 1000);
+            });
 
-            let button6=document.createElement('input');
-            button6.setAttribute('id', 'num_1');
-            button6.setAttribute('class', 'num');
-            button6.setAttribute('type', 'number');
-            button6.setAttribute('min', '0');
-            insert_div1.appendChild(button6);
+        } // backup()
 
-            let button7=document.createElement('input');
-            button7.setAttribute('class', 'editor_open');
-            button7.setAttribute('type', 'submit');
-            button7.setAttribute('value', '編集');
-            insert_div1.appendChild(button7);
-
-            button7.onclick=function(e){
-                e.preventDefault();
-                let k;
-                let pub_1_DB=[]; // pub_1 の entry_id の配列
-                if(pub_1>0){
-                    for(k=0; k<blogDB.length; k++){
-                        if(blogDB[k][1]=='1'){
-                            pub_1_DB.push(blogDB[k][0]); }}
-
-                    if(button6.value>0){
-                        let open_id=pub_1_DB[button6.value -1];
-                        let pass=
-                            'https://blog.ameba.jp/ucs/entry/srventryupdateinput.do?id='+ open_id;
-                        let win_option='top=20, left=40, width=1020, height=900';
-                        window.open(pass, button6.value, win_option); }}}
-
-            let span8=document.createElement('span');
-            span8.setAttribute('id', 'snap_result2');
-            span8.setAttribute('class', 'snap_result');
-            insert_div1.appendChild(span8);
-
-            let button9=document.createElement('input');
-            button9.setAttribute('id', 'num_2');
-            button9.setAttribute('class', 'num');
-            button9.setAttribute('type', 'number');
-            button9.setAttribute('min', '0');
-            insert_div1.appendChild(button9);
-
-            let button10=document.createElement('input');
-            button10.setAttribute('class', 'editor_open');
-            button10.setAttribute('type', 'submit');
-            button10.setAttribute('value', '編集');
-            insert_div1.appendChild(button10);
-
-            button10.onclick=function(e){
-                e.preventDefault();
-                let k;
-                let pub_2_DB=[]; // pub_2 の entry_id の配列
-                if(pub_2>0){
-                    for(k=0; k<blogDB.length; k++){
-                        if(blogDB[k][2]=='1'){
-                            pub_2_DB.push(blogDB[k][0]); }}
-
-                    if(button9.value>0){
-                        let open_id=pub_2_DB[button9.value -1];
-                        let pass=
-                            'https://blog.ameba.jp/ucs/entry/srventryupdateinput.do?id='+ open_id;
-                        let win_option='top=20, left=40, width=1020, height=900';
-                        window.open(pass, button9.value, win_option); }}}
-
-            snap_disp();
-
-        } // control_pannel()
-
-
-        function snap_disp(){
-            reg_set();
-            let span5=document.querySelector('#snap_result1');
-            span5.textContent='記録件数：' + (blogDB.length -1) + '　　　Check ❶：';
-            let button6=document.querySelector('#num_1');
-            button6.value=pub_1;
-            button6.max=pub_1;
-            let span8=document.querySelector('#snap_result2');
-            span8.textContent='Check ❷：';
-            let button9=document.querySelector('#num_2');
-            button9.value=pub_2;
-            button9.max=pub_2; }
 
 
         function hit_display(){
             let ch1=document.querySelectorAll('.ch1');
-            let ch2=document.querySelectorAll('.ch2');
             for(let k=0; k<ch1.length; k++){
                 let index=entry_id_DB.indexOf(entry_id[k].value);
                 if(index!=-1){ // IDがblogDBに記録されていた場合
                     if(blogDB[index][1]==1){
                         ch1[k].style.opacity='1'; }
                     else{
-                        ch1[k].style.opacity='0'; }
-                    if(blogDB[index][2]==1){
-                        ch2[k].style.opacity='1'; }
-                    else{
-                        ch2[k].style.opacity='0'; }}}}
+                        ch1[k].style.opacity='0'; }}
+                else{
+                    ch1[k].style.opacity='0'; }}}
 
 
         function hit_display_clear(){
             let ch1=document.querySelectorAll('.ch1');
-            let ch2=document.querySelectorAll('.ch2');
             for(let k=0; k<ch1.length; k++){
-                ch1[k].style.opacity='0';
-                ch2[k].style.opacity='0'; }}
+                ch1[k].style.opacity='0'; }}
+
 
 
         function next(x){ // xはページ内の記事index[0～length-1]
@@ -382,6 +390,7 @@ window.addEventListener('load', function(){ // 親ウインドウで働くメイ
                 next_call();}} // 投稿記事が無ければ 次ページをcall する
 
 
+
         function open_win(k){
             next_target=k; // 送信完了までは未処理とする
 
@@ -389,7 +398,7 @@ window.addEventListener('load', function(){ // 親ウインドウで働くメイ
             link_target=Array(entry_target.length);
             link_target[k]='/ucs/entry/srventryupdateinput.do?id='+ entry_id[k].value;
 
-            if(drive_mode=='c'){
+            if(drive_mode=='c' || drive_mode=='m'){
                 let win_option='top=60, left=0, width=800, height=300';
                 new_win[k]=window.open(link_target[k], k, win_option);
 
@@ -422,7 +431,13 @@ window.addEventListener('load', function(){ // 親ウインドウで働くメイ
                                                 let check=0;
                                                 for(let k=0; k<all_img.length; k++){
                                                     if(all_img[k].classList.contains('ogpCard_image')){
-                                                        all_img[k].setAttribute('alt', '🔗'); }
+                                                        if(card_img==0){
+                                                            all_img[k].setAttribute('alt', '🔗'); }
+                                                        if(card_img==1){
+                                                            if(all_img[k].src.includes('.gif')){
+                                                                all_img[k].setAttribute('alt', '🔗'); }
+                                                            else{
+                                                                all_img[k].setAttribute('alt', ''); }}}
                                                     else{
                                                         if(all_img[k].getAttribute('alt')==''){
                                                             if(!all_img[k].closest('.ogpCard_link')){
@@ -455,7 +470,6 @@ window.addEventListener('load', function(){ // 親ウインドウで働くメイ
                                 } // task()
 
 
-
                                 function send_result(n){
                                     let index=entry_id_DB.indexOf(entry_id[k].value);
                                     if(index==-1){ // IDがblogDBに記録されていない場合
@@ -465,13 +479,13 @@ window.addEventListener('load', function(){ // 親ウインドウで働くメイ
                                         if(n==1){
                                             blogDB[index][1]=1; } // 記事ID/フラグ「1」を更新
                                         else{
-                                            blogDB[index][1]=0; }} // 記事ID/フラグ「0」を更新
+                                            blogDB.splice(index, 1); }} // 記事IDの登録を削除
                                     reg_set(); }
 
 
                                 function strage_write(){
                                     let write_json=JSON.stringify(blogDB);
-                                    localStorage.setItem('EPW_DB_back', write_json); }// ストレージ保存
+                                    localStorage.setItem('EPWA_DB_back', write_json); }// ストレージ保存
 
 
                                 function publish_do(k){
@@ -511,7 +525,10 @@ window.addEventListener('load', function(){ // 親ウインドウで働くメイ
 
                 new_win[k].close();
                 setTimeout(()=>{
-                    next_do(k); }, 10); //⏩
+                    if(drive_mode=='c'){ // 連続処理
+                        next_do(k); }
+                    if(drive_mode=='m'){ // 単一のファイル処理
+                        location.reload(); }}, 10); //⏩
 
                 function next_do(k){
                     next_target=k+1;
@@ -519,6 +536,7 @@ window.addEventListener('load', function(){ // 親ウインドウで働くメイ
                     else{ next_call(); }}} // ページの終りまで終了した状態
 
         } // open_win()
+
 
 
         function next_call(){
@@ -531,7 +549,7 @@ window.addEventListener('load', function(){ // 親ウインドウで働くメイ
 
             blogDB[0][1]='c'; // 連続動作フラグを連続にセット
             let write_json=JSON.stringify(blogDB);
-            localStorage.setItem('EPW_DB_back', write_json); // ローカルストレージ保存
+            localStorage.setItem('EPWA_DB_back', write_json); // ローカルストレージ保存
 
             win_url=window.location.search.substring(1,window.location.search.length);
             current=win_url.slice(-6);
@@ -588,9 +606,7 @@ window.addEventListener('load', function(){ // 親ウインドウで働くメイ
             function when_edge(){
                 blogDB[0][1]='s'; // 連続動作フラグをリセット
                 let write_json=JSON.stringify(blogDB);
-                localStorage.setItem('EPW_DB_back', write_json); // ローカルストレージ保存
-                document.querySelector('#div0').remove();
-                document.querySelector('#div1').remove();
+                localStorage.setItem('EPWA_DB_back', write_json); // ローカルストレージ保存
                 control_pannel('e'); } // 全作業の終了時の表示をさせる
         } // next_call()
 
