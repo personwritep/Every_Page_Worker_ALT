@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name        Every Page Worker 💢💢 ALT
 // @namespace        http://tampermonkey.net/
-// @version        5.4
+// @version        5.5
 // @description        「記事の編集・削除」でブログ全記事を開いて更新を実行
 // @author        Ameba Blog User
 // @match        https://blog.ameba.jp/ucs/entry/srventrylist*
@@ -434,10 +434,7 @@ window.addEventListener('load', function(){ // 親ウインドウで働くメイ
                                                         if(card_img==0){
                                                             all_img[k].setAttribute('alt', '🔗'); }
                                                         if(card_img==1){
-                                                            if(all_img[k].src.includes('.gif')){
-                                                                all_img[k].setAttribute('alt', '🔗'); }
-                                                            else{
-                                                                all_img[k].setAttribute('alt', ''); }}}
+                                                            all_img[k].setAttribute('alt', ''); }}
                                                     else{
                                                         if(all_img[k].getAttribute('alt')==''){
                                                             if(!all_img[k].closest('.ogpCard_link')){
