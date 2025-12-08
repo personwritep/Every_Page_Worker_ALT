@@ -436,9 +436,12 @@ window.addEventListener('load', function(){ // 親ウインドウで働くメイ
                                                         if(card_img==1){
                                                             all_img[k].setAttribute('alt', ''); }}
                                                     else{
-                                                        if(all_img[k].getAttribute('alt')==''){
-                                                            if(!all_img[k].closest('.ogpCard_link')){
-                                                                check+=1; }}}} // ファビコン以外はALT必要
+                                                        if(all_img[k].getAttribute('alt')=='' ||
+                                                           all_img[k].getAttribute('alt')==null){
+                                                            let ogp=all_img[k].closest('.ogpCard_root');
+                                                            let pick=all_img[k].closest('.pickCreative_root');
+                                                            if(!ogp && !pick){ // リンク・ピックカード以外はALT必要
+                                                                check+=1; }}}}
 
                                                 resolve(check); }
                                         },400);
