@@ -440,7 +440,8 @@ window.addEventListener('load', function(){ // 親ウインドウで働くメイ
                                                            all_img[k].getAttribute('alt')==null){
                                                             let ogp=all_img[k].closest('.ogpCard_link');
                                                             let pick=all_img[k].closest('.pickCreative');
-                                                            if(!ogp && !pick){ // リンク・ピックカード以外はALT必要
+                                                            let xtw=all_img[k].closest('.twitter-tweet');
+                                                            if(!ogp && !pick && !xtw){ // 3種要素以外はALT必要
                                                                 check+=1; }}}}
 
                                                 resolve(check); }
