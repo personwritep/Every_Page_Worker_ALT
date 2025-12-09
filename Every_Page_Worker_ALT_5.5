@@ -438,8 +438,8 @@ window.addEventListener('load', function(){ // 親ウインドウで働くメイ
                                                     else{
                                                         if(all_img[k].getAttribute('alt')=='' ||
                                                            all_img[k].getAttribute('alt')==null){
-                                                            let ogp=all_img[k].closest('.ogpCard_root');
-                                                            let pick=all_img[k].closest('.pickCreative_root');
+                                                            let ogp=all_img[k].closest('.ogpCard_link');
+                                                            let pick=all_img[k].closest('.pickCreative');
                                                             if(!ogp && !pick){ // リンク・ピックカード以外はALT必要
                                                                 check+=1; }}}}
 
